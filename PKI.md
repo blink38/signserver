@@ -127,3 +127,31 @@ openssl pkcs12 -export -in /opt/pki/certificats/user.john.crt -inkey /opt/pki/ce
 ```
 
 I choose john as export password.
+
+## generic crypto token
+
+Create the key :
+
+ ```shell
+ openssl genrsa -out /opt/pki/certificats/crypto.generic.key 1024
+ ```
+ 
+ Create certificate request
+ 
+ ```shell
+ openssl req -days 365 -new -key /opt/pki/certificats/crypto.generic.key -out /opt/pki/certificats/crypto.generic.csr
+```
+
+Then generate and sign the certificate
+
+ ```shell
+openssl ca -config /opt/pki/config/ca.config -out /opt/pki/certificats/crypto.generic.crt -infiles /opt/pki/certificats/crypto.generic.csr
+```
+
+We will also create the p12 bundle :
+
+```shell
+openssl pkcs12 -export -in /opt/pki/certificats/crypto.generic.crt -inkey /opt/pki/certificats/crypto.generic.key -out /opt/pki/certificats/crypto.generic.p12 -name ensam.generic -CAfile /opt/pki/certificats/ca.crt
+```
+
+I choose generic as export password.
