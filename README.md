@@ -205,7 +205,7 @@ From our own PKI (see PKI.md), create a certificate for the wildfly service. The
 We have to create a PKCS12 certificate from wildfly private key and public certificate :
 
 ```shell
-openssl pkcs12 -export -in /opt/pki/certificats/https.wildfly.crt -inkey /opt/pki/certificats/https.wildfly.key -out /opt/pki/certificats/wildfly.p12 -name wildfly -CAfile /opt/pki/certificats/ca.crt
+openssl pkcs12 -export -in /opt/pki/certificats/https.wildfly.crt -inkey /opt/pki/certificats/https.wildfly.key -out /opt/pki/certificats/wildfly.p12 -name wildfly -chain -CAfile /opt/pki/certificats/ca.crt
 ```
 
 I choose p12secret as export password.
