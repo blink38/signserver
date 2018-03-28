@@ -454,3 +454,12 @@ Check status and retrieve worker id (ie 2)
 ```
 You must see Worker status and Token status = Active. Hoping so.
 
+To test XMLSigning :
+
+```shell
+./bin/signclient  signdocument -workername XMLSigner -infile /opt/signserver/res/signingtest/input/test.xml 
+<?xml version="1.0" encoding="UTF-8"?><root>
+	<my-tag>My Data</my-tag>
+<Signature xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments"/><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/><DigestValue>2oTQryPaqodno7SeYQjQSMIBiP0=</DigestValue></Reference></SignedInfo><SignatureValue>FqEphQrrYu[...]XCo=</SignatureValue><KeyInfo><X509Data><X509Certificate>MII[...]6C</X509Certificate></X509Data></KeyInfo></Signature></root>2018-03-28 15:14:55,064 INFO  [SignDocumentCommand] Wrote null.
+2018-03-28 15:14:55,065 INFO  [SignDocumentCommand] Processing test.xml took 356 ms.
+```
