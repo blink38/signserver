@@ -123,7 +123,7 @@ openssl ca -config /opt/pki/config/ca.config -out /opt/pki/certificats/user.john
 We will also create the p12 bundle :
 
 ```shell
-openssl pkcs12 -export -in /opt/pki/certificats/user.john.crt -inkey /opt/pki/certificats/user.john.key -out /opt/pki/certificats/user.john.p12 -name john.smith -CAfile /opt/pki/certificats/ca.crt
+openssl pkcs12 -export -in /opt/pki/certificats/user.john.crt -inkey /opt/pki/certificats/user.john.key -out /opt/pki/certificats/user.john.p12 -name john.smith -CAfile /opt/pki/certificats/ca.crt -chain
 ```
 
 I choose john as export password.
