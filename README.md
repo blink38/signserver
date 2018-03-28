@@ -198,3 +198,30 @@ Last shutdown command will stop wildfly application server. Just restart it in f
 
 
 
+## Configure Wildfly SSL
+
+From our own PKI (see PKI.md), create a certificate for the wildfly service. The common name of the certificate must be the same as the FQDN you will use in the service url.
+
+We have to create a PKCS12 certificate from wildfly private key and public certificate :
+
+```shell
+openssl pkcs12 -export -in /opt/pki/certificats/https.wildfly.crt -inkey /opt/pki/certificats/https.wildfly.key -out /opt/pki/certificats/wildfly.p12 -name wildfly -CAfile /opt/pki/certificats/ca.crt
+```
+
+I choose p12secret as export password.
+
+Then create a keystore which will contains the wildfly SSL certificate :
+
+```shell
+mkdir /opt/wildfly/standalone/configuration/keystore
+keytool -importkeystore -deststorepass keystorepwd  -destkeystore /opt/wildfly/standalone/configuration/keystore/wildfly.keystore.jks -srckeystore /opt/pki/certificats/wildfly.p12 -srcstoretype PKCS12 -srcstorepass p12secret -alias wildfly
+```
+
+I choose keystorepwd as keystore password. Change srcstorepass with your p12 export password.
+
+
+
+
+
+```shell
+cp /opt/pki/certificats/https.wildfly.key 
