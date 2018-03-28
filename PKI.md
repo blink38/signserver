@@ -72,6 +72,8 @@ openssl x509 -in /opt/pki/certificats/ca.crt -outform DER -out /opt/pki/certific
  
  # Create our first certificate
  
+ ## wildfly SSL certificat
+ 
  We will create our first certificate for a web service (wildfly)
  
  First create key :
@@ -95,3 +97,33 @@ openssl ca -config /opt/pki/config/ca.config -out /opt/pki/certificats/https.wil
 ```
 
 You got your first certificate : /opt/pki/certificats/https.wildfly.key (private key) and /opt/pki/certificats/https.wildfly.crt (public certificate)
+
+## user certificate
+
+We will also create a certificate for a user, with which he will be able to sign documents and authenticate against SSL wildfly secure url.
+
+Create the key :
+
+ ```shell
+ openssl genrsa -out /opt/pki/certificats/user.john.key 1024
+ ```
+ 
+ Create certificate request
+ 
+ ```shell
+ openssl req -days 365 -new -key /opt/pki/certificats/user.john.key -out /opt/pki/certificats/user.john.csr
+```
+
+Then generate and sign the certificate
+
+ ```shell
+openssl ca -config /opt/pki/config/ca.config -out /opt/pki/certificats/user.john.crt -infiles /opt/pki/certificats/user.john.csr
+```
+
+We will also create the p12 bundle :
+
+```shell
+openssl pkcs12 -export -in /opt/pki/certificats/user.john.crt -inkey /opt/pki/certificats/user.john.key -out /opt/pki/certificats/user.john.p12 -name john.smith -CAfile /opt/pki/certificats/ca.crt
+```
+
+I choose john as export password.
