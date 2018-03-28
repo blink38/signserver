@@ -230,7 +230,7 @@ Use keystore password choose previously (keystorepwd for me)
 Now, we have to create the truststore file which will contains users certificate. They will be able to connect to HTTPs private area with they own certificate (SSL connection will verify the client certificate).
 
 ```shell
-keytool -import -file /opt/pki/certificats/user.john.crt -keystore /opt/wildfly/standalone/configuration/keystore/truststore.jks
+keytool -alias john.smith -import -file /opt/pki/certificats/user.john.crt -keystore /opt/wildfly/standalone/configuration/keystore/truststore.jks
 ```
 
 I choose trustpwd as truststore password.
@@ -241,18 +241,19 @@ chown jboss.jobss /opt/wildfly* -R
 
 We are now able to configure wildfly SSL. For that, we will use the jboss CLI (under user jboss). So return to the terminal in which you previously launch the jboss CLI.
 
+(code starting with [standalone@localhost:9990 /] must be paste into jboss CLI)
+
 ```
-[standalone@localhost:9990 /] /interface=http:add(inet-address="0.0.0.0")
-{"outcome" => "success"}
-[standalone@localhost:9990 /] /interface=httpspub:add(inet-address="0.0.0.0")
-{"outcome" => "success"}
-[standalone@localhost:9990 /] /interface=httpspriv:add(inet-address="0.0.0.0")
-{"outcome" => "success"}
+[standalone@localhost:9990 /]
+ /interface=http:add(inet-address="0.0.0.0")
+/interface=httpspub:add(inet-address="0.0.0.0")
+/interface=httpspriv:add(inet-address="0.0.0.0")
 ```
 
 Secure the CLI by removing the http-remoting-connector from using the http port and instead use a separate port 4447. 
 
 ```
+[standalone@localhost:9990 /]
 /subsystem=remoting/http-connector=http-remoting-connector:remove
 /subsystem=remoting/http-connector=http-remoting-connector:add(connector-ref="remoting",security-realm="ApplicationRealm")
 /socket-binding-group=standard-sockets/socket-binding=remoting:add(port="4447")
@@ -261,6 +262,7 @@ Secure the CLI by removing the http-remoting-connector from using the http port 
 ```
 
 ```
+[standalone@localhost:9990 /]
 /socket-binding-group=standard-sockets/socket-binding=httpspriv:add(port="8443",interface="httpspriv")
 /core-service=management/security-realm=SSLRealm:add()
 /core-service=management/security-realm=SSLRealm/server-identity=ssl:add(keystore-path="keystore/wildfly.keystore.jks", keystore-relative-to="jboss.server.config.dir", keystore-password="keystorepwd", alias="wildfly")
@@ -276,6 +278,7 @@ Pay attention to the third and the fourth command :
 Set-up the public SSL port which doesn't require the client certificate
 
 ```
+[standalone@localhost:9990 /]
 /socket-binding-group=standard-sockets/socket-binding=httpspub:add(port="8442",interface="httpspub")
 /subsystem=undertow/server=default-server/https-listener=httpspub:add(socket-binding="httpspub", security-realm="SSLRealm")
 ```
@@ -289,3 +292,123 @@ reload
 Hope you do not have red message in wildfly console.
 
 Port 8443 and 8442 must be open. Command netstat -taonp will help you to check for it.
+
+
+Fix web service problem in JBoss AS 7/EAP 6/WildFly
+
+Configure WSDL web-host rewriting to use the request host. Needed for webservices to work correctly when requiring client certificate.
+
+```
+[standalone@localhost:9990 /]
+/subsystem=webservices:write-attribute(name=wsdl-host, value=jbossws.undefined.host)
+/subsystem=webservices:write-attribute(name=modify-wsdl-address, value=true)
+```
+If the server is not so fast, we have to wait a little before we can reload, otherwise it will be bad
+
+```
+[standalone@localhost:9990 /]
+:reload
+```
+
+## SignServer deployment
+
+Copy conf/signserver_deploy.properties.sample to conf/signserver_deploy.properties and open it for editing. 
+
+```shell
+cp /opt/signserver/conf/signserver_deploy.properties.sample /opt/signserver/conf/signserver_deploy.properties
+vi /opt/signserver/conf/signserver_deploy.properties
+```
+
+Uncomment lines :
+
+```
+appserver.home=${env.APPSRV_HOME}
+database.name=mysql
+```
+
+```shell
+chown jboss.jboss /opt/signserver* -R
+```
+
+As user jboss, deploy configuration :
+
+```
+cd /opt/signserver
+./bin/ant deploy
+```
+
+Check signserver version :
+
+```shell
+bin/signserver getstatus brief all
+Current version of server is : SignServer EE 4.0.0
+```
+
+## SignServer workers 
+
+### Crypto Worker
+
+This work will manage key used to sign. It will store key as p12 (in order to have private and public key).
+
+We will create a store with a generic key pair.
+
+Create the keystore including the generic certificate :
+
+```shell
+mkdir /opt/signserver/myconfig
+keytool -importkeystore -deststorepass keystorepwd  -destkeypass keystorepwd -destkeystore /opt/signserver/myconfig/worker.crypto.keystore.jks -srckeystore /opt/pki/certificats/crypto.generic.p12 -srcstoretype PKCS12 -srcstorepass generic -alias generic
+keytool -importkeystore -srckeystore /opt/signserver/myconfig/worker.crypto.keystore.jks -destkeystore /opt/signserver/myconfig/worker.crypto.keystore.jks -deststoretype pkcs12
+```
+
+Create the properties file /opt/signserver/myconfig/worker-crypto.properties :
+
+```
+# Type of worker
+WORKERGENID1.TYPE=CRYPTO_WORKER
+
+# This worker will not perform any operations on its own and indicates this by
+# using the worker type CryptoWorker
+WORKERGENID1.IMPLEMENTATION_CLASS=org.signserver.server.signers.CryptoWorker
+
+# Uses a soft keystore:
+WORKERGENID1.CRYPTOTOKEN_IMPLEMENTATION_CLASS=org.signserver.server.cryptotokens.KeystoreCryptoToken
+
+# Name for other workers to reference this worker:
+WORKERGENID1.NAME=MyCryptoTokenP12
+
+# Type of keystore
+# PKCS12 and JKS for file-based keystores
+# INTERNAL to use a keystore stored in the database (tied to the crypto worker)
+WORKERGENID1.KEYSTORETYPE=PKCS12
+
+# Path to the keystore file (only used for PKCS12 and JKS)
+WORKERGENID1.KEYSTOREPATH=/opt/signserver/myconfig/worker.crypto.keystore.jks
+
+# Optional password of the keystore. If specified the token is "auto-activated".
+WORKERGENID1.KEYSTOREPASSWORD=keystorepwd
+
+# Optional key to test activation with. If not specified the first key found is
+# used.
+WORKERGENID1.DEFAULTKEY=generic
+```
+
+Defaultkey is the name of the generic certificate imported in the keystore  (-alias generic)
+
+Import the configuration into SignServer :
+
+```shell
+cd /opt/signserver
+./bin/signserver setproperties /opt/signserver/myconfig/worker
+```
+
+Check worker status :
+
+```shell
+bin/signserver getstatus brief all
+Current version of server is : SignServer CE 4.0.0
+
+Status of CryptoWorker with id 1 (MyCryptoTokenP12) is:
+   Worker status : Active
+   Token status  : Active
+```
+
