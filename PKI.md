@@ -32,7 +32,7 @@ certificate     = /opt/pki/certificats/ca.crt
 private_key     = /opt/pki/certificats/ca.key
 default_days    = 3000
 default_crl_days = 30
-default_md      = md5
+default_md      = sha1
 preserve        = no
 policy  = policy_anything
 
