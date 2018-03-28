@@ -214,11 +214,18 @@ Then create a keystore which will contains the wildfly SSL certificate :
 
 ```shell
 mkdir /opt/wildfly/standalone/configuration/keystore
-keytool -importkeystore -deststorepass keystorepwd  -destkeystore /opt/wildfly/standalone/configuration/keystore/wildfly.keystore.jks -srckeystore /opt/pki/certificats/wildfly.p12 -srcstoretype PKCS12 -srcstorepass p12secret -alias wildfly
+keytool -importkeystore -deststorepass keystorepwd  -destkeypass keystorepwd -destkeystore /opt/wildfly/standalone/configuration/keystore/wildfly.keystore.jks -srckeystore /opt/pki/certificats/wildfly.p12 -srcstoretype PKCS12 -srcstorepass p12secret -alias wildfly
 ```
 
-I choose keystorepwd as keystore password. Change srcstorepass with your p12 export password.
+I choose keystorepwd as keystore password. Be carefull, deststorepass and destkeypass must be the same. Otherwise wildfly will not be able to retrieve key file. Change srcstorepass with your p12 export password.
 
+You can migrate the keystore as warning message tell you :
+
+```shell
+keytool -importkeystore -srckeystore /opt/wildfly/standalone/configuration/keystore/wildfly.keystore.jks -destkeystore /opt/wildfly/standalone/configuration/keystore/wildfly.keystore.jks -deststoretype pkcs12
+```
+
+Use keystore password choose previously (keystorepwd for me)
 
 Now, we have to create the truststore file which will contains users certificate. They will be able to connect to HTTPs private area with they own certificate (SSL connection will verify the client certificate).
 
@@ -278,3 +285,7 @@ Then reload all the configuration change
 ```
 reload
 ```
+
+Hope you do not have red message in wildfly console.
+
+Port 8443 and 8442 must be open. Command netstat -taonp will help you to check for it.
