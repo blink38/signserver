@@ -220,8 +220,61 @@ keytool -importkeystore -deststorepass keystorepwd  -destkeystore /opt/wildfly/s
 I choose keystorepwd as keystore password. Change srcstorepass with your p12 export password.
 
 
-
-
+Now, we have to create the truststore file which will contains users certificate. They will be able to connect to HTTPs private area with they own certificate (SSL connection will verify the client certificate).
 
 ```shell
-cp /opt/pki/certificats/https.wildfly.key 
+keytool -import -file /opt/pki/certificats/user.john.crt -keystore /opt/wildfly/standalone/configuration/keystore/truststore.jks
+```
+
+I choose trustpwd as truststore password.
+
+```
+chown jboss.jobss /opt/wildfly* -R
+```
+
+We are now able to configure wildfly SSL. For that, we will use the jboss CLI (under user jboss). So return to the terminal in which you previously launch the jboss CLI.
+
+```
+[standalone@localhost:9990 /] /interface=http:add(inet-address="0.0.0.0")
+{"outcome" => "success"}
+[standalone@localhost:9990 /] /interface=httpspub:add(inet-address="0.0.0.0")
+{"outcome" => "success"}
+[standalone@localhost:9990 /] /interface=httpspriv:add(inet-address="0.0.0.0")
+{"outcome" => "success"}
+```
+
+Secure the CLI by removing the http-remoting-connector from using the http port and instead use a separate port 4447. 
+
+```
+/subsystem=remoting/http-connector=http-remoting-connector:remove
+/subsystem=remoting/http-connector=http-remoting-connector:add(connector-ref="remoting",security-realm="ApplicationRealm")
+/socket-binding-group=standard-sockets/socket-binding=remoting:add(port="4447")
+/subsystem=undertow/server=default-server/http-listener=remoting:add(socket-binding=remoting)
+:reload
+```
+
+```
+/socket-binding-group=standard-sockets/socket-binding=httpspriv:add(port="8443",interface="httpspriv")
+/core-service=management/security-realm=SSLRealm:add()
+/core-service=management/security-realm=SSLRealm/server-identity=ssl:add(keystore-path="keystore/wildfly.keystore.jks", keystore-relative-to="jboss.server.config.dir", keystore-password="keystorepwd", alias="wildfly")
+/core-service=management/security-realm=SSLRealm/authentication=truststore:add(keystore-path="keystore/truststore.jks", keystore-relative-to="jboss.server.config.dir", keystore-password="trustpwd")
+/subsystem=undertow/server=default-server/https-listener=httpspriv:add(socket-binding="httpspriv", security-realm="SSLRealm", verify-client=REQUIRED)
+```
+
+Pay attention to the third and the fourth command : 
+
+3. keystore-password must be the password you choose to use when creating the wildfly.keystore.jks file. Alias is the alias you choose when importing the wildfly SSL certificate.
+4. keystore-password must be the password you choose to use when creating the truststore.jks file.
+
+Set-up the public SSL port which doesn't require the client certificate
+
+```
+/socket-binding-group=standard-sockets/socket-binding=httpspub:add(port="8442",interface="httpspub")
+/subsystem=undertow/server=default-server/https-listener=httpspub:add(socket-binding="httpspub", security-realm="SSLRealm")
+```
+
+Then reload all the configuration change
+
+```
+reload
+```
