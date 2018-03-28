@@ -87,3 +87,11 @@ openssl x509 -in /opt/pki/certificats/ca.crt -outform DER -out /opt/pki/certific
 ```
 
 (challenge password is not required)
+
+Generate final certificate from our PKI and sign it 
+ 
+ ```shell
+openssl ca -config /opt/pki/config/ca.config -out /opt/pki/certificats/https.wildfly.crt -infiles /opt/pki/certificats/https.wildfly.csr
+```
+
+You got your first certificate : /opt/pki/certificats/https.wildfly.key (private key) and /opt/pki/certificats/https.wildfly.crt (public certificate)
