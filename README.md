@@ -412,3 +412,45 @@ Status of CryptoWorker with id 1 (MyCryptoTokenP12) is:
    Token status  : Active
 ```
 
+Activate the CrytoToken worker : 
+
+```shell
+bin/signserver activatecryptotoken 1
+```
+
+### XML Signer
+
+Create the file /opt/signserver/myconfig/worker-xmlsigner.properties
+
+```
+## General properties
+WORKERGENID1.TYPE=PROCESSABLE
+WORKERGENID1.IMPLEMENTATION_CLASS=org.signserver.module.xmlsigner.XMLSigner
+WORKERGENID1.NAME=XMLSigner
+WORKERGENID1.AUTHTYPE=NOAUTH
+
+# Crypto token
+WORKERGENID1.CRYPTOTOKEN=MyCryptoTokenP12
+
+# Using key from sample keystore
+WORKERGENID1.DEFAULTKEY=signer00003
+# Key using ECDSA
+WORKERGENID1.DEFAULTKEY=generic
+
+WORKERGENID1.KEYSTOREPASSWORD=keystorepwd
+```
+
+and import it :
+
+```shell
+cd /opt/signserver
+./bin/signserver setproperties myconfig/worker-xmlsigner.properties
+```
+
+Check status and retrieve worker id (ie 2)
+
+```shell
+./bin/signserver getstatus brief all
+```
+You must see Worker status and Token status = Active. Hoping so.
+
