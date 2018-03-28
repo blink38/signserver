@@ -151,7 +151,7 @@ openssl ca -config /opt/pki/config/ca.config -out /opt/pki/certificats/crypto.ge
 We will also create the p12 bundle :
 
 ```shell
-openssl pkcs12 -export -in /opt/pki/certificats/crypto.generic.crt -inkey /opt/pki/certificats/crypto.generic.key -out /opt/pki/certificats/crypto.generic.p12 -name ensam.generic -CAfile /opt/pki/certificats/ca.crt
+openssl pkcs12 -export -in /opt/pki/certificats/crypto.generic.crt -inkey /opt/pki/certificats/crypto.generic.key -out /opt/pki/certificats/crypto.generic.p12 -name generic -CAfile /opt/pki/certificats/ca.crt
 ```
 
 I choose generic as export password.
