@@ -227,6 +227,13 @@ keytool -alias john.smith -import -file /opt/pki/certificats/user.john.crt -keys
 
 I choose trustpwd as truststore password.
 
+You need need also to import the certificat of the CA in the user certificat chain. In our example, just import the ca.crt 
+
+```shell
+keytool -alias myownca -import -file /opt/pki/certificats/ca.crt -keystore /opt/wildfly/standalone/configuration/keystore/truststore.jks
+```
+
+
 ```
 chown jboss.jobss /opt/wildfly* -R
 ```
