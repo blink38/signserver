@@ -466,7 +466,7 @@ To test XMLSigning :
 
 ### PDF Signer
 
-Create the file /opt/signserver/myconfig/worker-pdfsigner.properties
+Create the file [/opt/signserver/myconfig/worker-pdfsigner.properties](myconfig/worker-pdfsigner.properties)
 
 ```
 ## General properties
