@@ -245,7 +245,7 @@ We are now able to configure wildfly SSL. For that, we will use the jboss CLI (u
 ```
 [standalone@localhost:9990 /]
  /interface=http:add(inet-address="0.0.0.0")
-/interface=httpspub:add(inet-address="0.0.0.0")
+/interface=httpspub:add(inet-address="127.0.0.1")
 /interface=httpspriv:add(inet-address="0.0.0.0")
 ```
 
